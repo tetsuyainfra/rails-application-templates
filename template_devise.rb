@@ -17,12 +17,16 @@ def add_gem
   gem 'pundit'
 end
 
+def create_page_controller
+  generate "controller Page home about help"
+end
+
 def devise_config
   generate "devise:install"
 
   environment("config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }", env: "development")
 
-  route "root to: 'home#index'"
+  route "root to: 'page#home'"
 
   generate "devise", "User", "username:string:unique", "displayname:string"
   generate "devise:views", "users"
@@ -42,7 +46,7 @@ def devise_config
   # 一般ユーザと管理ユーザのモデルを分ける
   generate "devise Admin"
   generate "devise:views", "admins", "-v", "sessions"       # only  a few sets of views
-  generate "devise:controllers", "admins", "-v", "sessions" # only  a few sets of views
+  generate "devise:controllers", "admins", "-c", "sessions" # only  a few sets of controllers
 end
 
 def devise_custom_model
@@ -50,42 +54,96 @@ def devise_custom_model
     "\n  config.scoped_views = true"
   end
 
+  # モデル毎に使うコントローラーを指定する
   inject_into_file "config/routes.rb", after: "devise_for :users" do
-    ", controllers: { sessions: 'users/sessions' }"
+    ", controllers: { sessions: 'users/sessions', registrations: 'users/registrations' }"
   end
   inject_into_file "config/routes.rb", after: "devise_for :admins" do
     ", controllers: { sessions: 'admins/sessions' }"
   end
 
-  remove_file "app/models/user.rb"
-  template "app/models/user.rb.tt"
+  # テンプレートファイルから生成
+  %w(
+      app/controllers/concerns/solo_accessible.rb
+      app/models/user.rb
+      app/models/user_identity.rb
+      app/models/admin.rb
+    ).each do | filename |
+    remove_file filename
+    template "#{filename}.tt"
+  end
 
-  remove_file "app/models/user_identity.rb"
-  template "app/models/user_identity.rb.tt"
+  # controllerのカスタマイズ
+  ## Users
+  inject_into_class "app/controllers/users/sessions_controller.rb", "Users::SessionsController", <<-'CODE'
+  include SoloAccessible
+  skip_before_action :check_solo, only: :destroy
+  CODE
+  inject_into_class "app/controllers/users/registrations_controller.rb", "Users::RegistrationsController", <<-'CODE'
+  include SoloAccessible
+  skip_before_action :check_solo, except: [:new, :create]
+  CODE
 
+  ## Admins
+  inject_into_class "app/controllers/admins/sessions_controller.rb", "Admins::SessionsController", <<-'CODE'
+  include SoloAccessible
+  skip_before_action :check_solo, only: :destroy
+  CODE
+end
+
+def devise_custom_test
+  inject_into_class "app/controllers/application_controller.rb", "ApplicationController" do
+    <<-'CODE'
+  before_action :configure_permitted_parameters, if: :devise_controller?
+
+  protected
+
+  def configure_permitted_parameters
+    added_attrs = [:username, :email, :password, :password_confirmation, :remember_me]
+    devise_parameter_sanitizer.permit :sign_up, keys: added_attrs
+    devise_parameter_sanitizer.permit :account_update, keys: added_attrs
+  end
+    CODE
+  end
+
+  test_files = Dir.glob("#{__dir__}/test/**/*.*").map{ |p| p.gsub(/^#{__dir__}\//, "") }
+  test_files.each do | f |
+    copy_file f, force: true
+  end
+  # %w( test/fixtures/users.yml
+  #     test/fixtures/user_identities.yml
+  #     test/fixtures/admins.yml
+  #   ).each do | filename |
+  # end
 end
 
 
-
 def devise_view
-  insert_code = '<p class="notice"><%= notice %></p><p class="alert"><%= alert %></p>'
-
+  # レイアウトの変更
   in_root do
-    viewpath = 'app/views/layouts/application.html.erb'
-    if File.exists?("#{viewpath}")
-      inject_into_file(viewpath,
-        insert_code,
-        after: "<body>")
+    viewpath = 'app/views/layouts/application.html'
+    filename = "#{viewpath}.erb"
+    if File.exists?(filename)
+      remove_file filename
+      template "#{filename}.tt"
     end
 
-    viewpath = 'app/views/layouts/application.html.slim'
-    if File.exists?("#{viewpath}")
-      gsub_file(viewpath,
-        /^(\s+)body/,
-        "\\1body\n\\1  #{insert_code}"
-      )
-
+    filename = "#{viewpath}.slim"
+    if File.exists?(filename)
+      remove_file filename
+      template "#{filename}.tt"
     end
+  end # exit in_root
+
+  # deviseコントローラーのサインイン/ログインビューでusernameを入力可能にする
+  %w(
+    app/views/users/sessions/new.html.erb
+    app/views/users/registrations/new.html.erb
+    app/views/users/registrations/edit.html.erb
+    config/locales/model.yml
+    ).each do | filename |
+    remove_file filename
+    template "#{filename}.tt"
   end
 end
 
@@ -100,10 +158,9 @@ add_gem
 
 after_bundle do
   puts "after_bundle #{__FILE__}"
+  create_page_controller
   devise_config
   devise_custom_model
+  devise_custom_test
   devise_view
 end
-
-
-

@@ -1,22 +1,27 @@
 # rails-application-templates
 rails5 application template
 
+name | version
+-----|------
+rails | ~5.2.2
+devise | ~4.5
+
 ```
 git clone https://github.com/tetsuyainfra/rails-application-templates.git
 rails new FooBarApp -m ./rails-application-templates/template_all.rb
+cd FooBarApp
+rails db:migrate
+rails db:fixtures:load
+rails test
+rails s
 ```
 
 or 
 
 ```
 git clone https://github.com/tetsuyainfra/rails-application-templates.git
-rails new FooBarApp -m https://raw.githubusercontent.com/tetsuyainfra/rails-application-templates/master/template_all.rb
-```
-
-or 
-
-```
-rails new FooBarApp -m https://raw.githubusercontent.com/tetsuyainfra/rails-application-templates/master/template_[slim|devise|style].rb
+rails new FooBarApp -m ./rails-application-templates/template_[all|slim|devise].rb
+etc...
 ```
 
 # 参考

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>NovelismApp</title>
+    <%%= csrf_meta_tags %>
+    <%%= csp_meta_tag %>
+
+    <%%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track': 'reload' %>
+    <%%= javascript_include_tag 'application', 'data-turbolinks-track': 'reload' %>
+  </head>
+
+  <body>
+    <p class="notice"><%%= notice %></p>
+    <p class="alert"><%%= alert %></p>
+    <p>
+      <%% if user_signed_in? %>
+        <%%= link_to "#{current_user.username} Logout", destroy_user_session_path, :method => :delete %>
+      <%% else %>
+        <a href="<%%= user_session_path %>">user</a>
+      <%% end %>
+    </p>
+    <p>
+      <%% if admin_signed_in? %>
+        <%%= link_to "#{current_admin.email} Logout", destroy_admin_session_path, :method => :delete %>
+      <%% else %>
+        <a href="<%%= admin_session_path %>">admin</a>
+      <%% end %>
+    </p>
+
+
+    <%%= yield %>
+  </body>
+</html>
