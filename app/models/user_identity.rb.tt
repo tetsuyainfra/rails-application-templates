@@ -1,0 +1,3 @@
+class UserIdentity < ApplicationRecord
+  belongs_to :user
+end

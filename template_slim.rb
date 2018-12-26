@@ -24,14 +24,18 @@ def replace_layouts
   else
     # on windows, can't delete file, so you should delete manually
     run "erb2slim ./app/views ./app/views"
+    in_root do
+      Dir.glob("app/views/**/*.erb").each { |f| remove_file f }
+    end
+
   end
 end
 
 # main start
-
 add_gem
 
 after_bundle do
+  puts "after_bundle #{__FILE__}"
   define_config
   replace_layouts
 end
@@ -45,4 +49,3 @@ end
 #     git add: "."
 #     git commit: %Q{ -a -m "Initial commit" }
 #   end
-# end
