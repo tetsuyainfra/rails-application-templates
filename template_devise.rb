@@ -15,6 +15,10 @@ def add_gem
   # gem 'cancan'
   # gem 'cancancan'
   gem 'pundit'
+
+  # Ignore chromedriver-helper ( especially windows... )
+  # see: https://github.com/flavorjones/chromedriver-helper/issues/19
+  inject_into_file "Gemfile", "## ", before: "gem 'chromedriver-helper'"
 end
 
 def create_page_controller
@@ -155,6 +159,7 @@ end
 
 # main start
 add_gem
+
 
 after_bundle do
   puts "after_bundle #{__FILE__}"
