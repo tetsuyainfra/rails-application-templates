@@ -1,0 +1,8 @@
+# especially use in rails credentials:edit
+#export RAILS_MASTER_KEY=$(cat config/master.key)
+export EDITOR=vim
+# example postgresql
+export DB_HOST=localhost
+export DB_PORT=5432
+export DB_USER=postgres
+export DB_PASSWORD=mysecretpassword1234
