@@ -31,7 +31,8 @@ Rails.application.config.assets.precompile << Proc.new do |shortpath, fullpath|
   # app/assets内のファイルを対象とする
   if fullpath =~ /^#{Rails.root}\/app\/assets/
     basename = File.basename(shortpath)
-    if basename =~ /^[^_]*\.(css|scss)/
+    # 一文字目に_を含まないファイル名のみを許可する
+    if basename =~ /^[^_].*\.(css|scss|sass|js)/
       # logger.info "assets test clear: #{fullpath}"
       true
     else
